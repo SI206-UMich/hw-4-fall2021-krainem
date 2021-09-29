@@ -214,14 +214,36 @@ class TestAllMethods(unittest.TestCase):
         self.assertEqual(self.f1.wallet, 100)
         self.assertEqual(self.s1.earnings, 0)
 		
-        # case 3: check if the cashier can order item from that stall FIX THIS
+        # case 3: check if the cashier can order item from that stall 
+        c4 = Cashier("South", directory = [self.s1])
+        Customer.validate_order(self.f1, c4, self.s2, "Burger", 1)
+        self.assertEqual(self.s2.inventory["Burger"], 40)
+        self.assertEqual(self.f1.wallet, 100)
+        self.assertEqual(self.s1.earnings, 0)
+		
+
+
+        # case 4: successful order
         Customer.validate_order(self.f1, self.c1, self.s1, "Burger", 1)
             # Customer will lose money of 1x burger
         self.assertEqual(self.f1.wallet, 90)
             # Stall gain money of 1x burger
         self.assertEqual(self.s1.earnings, 10)
-            # Inventory of burger should go down
+            # Inventory of burger should go down by 1
         self.assertEqual(self.s1.inventory["Burger"], 39)
+
+        #test buying out an item and using exact amount of money in wallet
+        #fill customer with exact amount of cash needed to buy 39 burgers
+        Customer.reload_money(self.f1, 300)
+        #customer buys all 39 existing burgers at stall
+        Customer.validate_order(self.f1, self.c1, self.s1, "Burger", 39)
+        #customer's wallet should be empty
+        self.assertEqual(self.f1.wallet, 0)
+        #the stall should gain 390$ from this transaction, + the 10 from the last transaction
+        self.assertEqual(self.s1.earnings, 400)
+        #the stall should now be out of burgers
+        self.assertEqual(self.s1.inventory["Burger"], 0)
+
 
     # Test if a customer can add money to their wallet
     def test_reload_money(self):
@@ -258,9 +280,10 @@ def main():
     Customer.validate_order(customer_4, cashier_1, stall_1, 'Crepe', 1)
     #case 4: the customer successfully places an order
     Customer.validate_order(customer_3, cashier_1, stall_1, 'Pancake', 1)
-    
+
 
 if __name__ == "__main__":
 	main()
 	print("\n")
 	unittest.main(verbosity = 2)
+
